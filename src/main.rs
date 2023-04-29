@@ -12,7 +12,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()).set(WindowPlugin {
             primary_window: Some(Window {
-                title: "yet another minecrat clone (by tushonka)".to_string(),
+                title: "yet another block game".to_string(),
                 present_mode: PresentMode::AutoVsync,
                 ..default()
             }),

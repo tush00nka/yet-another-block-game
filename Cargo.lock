@@ -479,15 +479,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_flycam"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b624150f4d28b8f03d924ed3d329d9765756c02c5652001b3c34f52b33fd235a"
-dependencies = [
- "bevy",
-]
-
-[[package]]
 name = "bevy_gilrs"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3961,7 +3952,6 @@ name = "yet-another-block-game"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "bevy_flycam",
  "bevy_rapier3d",
  "noise",
 ]

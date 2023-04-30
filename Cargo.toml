@@ -11,6 +11,5 @@ opt-level = 1
 
 [dependencies]
 bevy = { version = "0.10.1", features = ["dynamic_linking", "wayland"] }
-bevy_flycam = "*"
 bevy_rapier3d = "*"
 noise = "0.8.2"

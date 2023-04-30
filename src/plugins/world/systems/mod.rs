@@ -1,10 +1,9 @@
 // use std::time::Duration;
 
 use bevy::prelude::*;
-use bevy_flycam::FlyCam;
 use noise::Perlin;
 
-use crate::{RENDER_DISTANCE, CHUNK_WIDTH};
+use crate::{RENDER_DISTANCE, CHUNK_WIDTH, plugins::player::components::Player};
 
 use super::{chunk::{systems::{generate_chunk_data, build_chunk}, components::ChunkComponent}, WorldMap, SeededPerlin, ChunkQueue};
 
@@ -14,14 +13,10 @@ pub fn generate_world_system(
     let perlin = Perlin::new(123);
 
     commands.insert_resource(SeededPerlin { noise: perlin });
-
-    // commands.insert_resource(ChunkQueueConfig {
-    //     timer: Timer::new(Duration::from_millis(1), TimerMode::Repeating)
-    // });
 }
 
 pub fn generate_chunks_from_player_movement(
-    player_query: Query<&Transform, With<FlyCam>>,
+    player_query: Query<&Transform, With<Player>>,
     mut world_map: ResMut<WorldMap>,
     perlin: Res<SeededPerlin>,
     mut chunk_queue: ResMut<ChunkQueue>,
@@ -50,7 +45,7 @@ pub fn generate_chunks_from_player_movement(
 pub fn unload_far_chunks(
     mut commands: Commands,
     chunk_query: Query<(&ChunkComponent, Entity)>,
-    player_query: Query<&Transform, With<FlyCam>>,
+    player_query: Query<&Transform, With<Player>>,
     mut world_map: ResMut<WorldMap>,
 ) {
     let player_transform = player_query.single();
@@ -80,8 +75,6 @@ pub fn deque_chunks(
     mut chunk_query: Query<&Handle<Mesh>, With<ChunkComponent>>,
     asset_server: Res<AssetServer>,
 ) {
-    //config.timer.tick(time.delta());
-
     if chunk_queue.queue.len() > 0 {
         build_chunk(&mut commands, &mut world_map, &mut chunk_query, &mut meshes, &mut materials,  asset_server, chunk_queue.queue[0]);
         chunk_queue.queue.remove(0);

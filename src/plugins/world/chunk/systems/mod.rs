@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh}};
+use bevy_rapier3d::prelude::{Collider, ComputedColliderShape, Friction, CoefficientCombineRule};
 use noise::{Perlin, NoiseFn};
 
 use crate::{CHUNK_WIDTH, CHUNK_HEIGHT, plugins::world::WorldMap};
@@ -87,8 +88,10 @@ pub fn build_chunk(
             ..default()
         });
     
+        let mesh = generate_chunk_mesh(world_map, position);
+
         let chunk = commands.spawn(MaterialMeshBundle {
-            mesh: meshes.add(generate_chunk_mesh(world_map, position)),
+            mesh: meshes.add(mesh.clone()),
             material: material_handle,
             transform: Transform::from_translation(Vec3::new(position.0 as f32 * CHUNK_WIDTH as f32, 0.0, position.1 as f32  * CHUNK_WIDTH as f32)),
             ..default()
@@ -97,6 +100,14 @@ pub fn build_chunk(
             blocks: world_map.chunks[&position].clone(),
         }).id();
     
+        // adding a collider, so the world is actually walkable
+        commands.entity(chunk)
+            .insert(Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::TriMesh).unwrap())
+            .insert(Friction {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        });
+
         world_map.chunk_entities.insert(position, chunk);
     }
 }

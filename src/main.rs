@@ -1,6 +1,6 @@
 use bevy::{prelude::*, diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, window::PresentMode};
-use bevy_flycam::prelude::*;
-use plugins::{camera::CameraPlugin, world::WorldPlugin};
+use bevy_rapier3d::prelude::{RapierPhysicsPlugin, NoUserData};
+use plugins::{camera::CameraPlugin, world::WorldPlugin, player::PlayerPlugin};
 
 mod plugins;
 
@@ -23,5 +23,6 @@ fn main() {
         .add_plugin(WorldPlugin)
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .run();
 }

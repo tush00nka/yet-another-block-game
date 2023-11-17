@@ -61,7 +61,7 @@ pub fn camera_rotation_system(
     let player_transform = player_query.single();
 
     let mut rotation_move = Vec2::ZERO;
-    for ev in ev_motion.iter() {
+    for ev in ev_motion.read() {
             rotation_move += ev.delta;
     }
 

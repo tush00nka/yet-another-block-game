@@ -18,11 +18,11 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(PlayerPlugin)
-        .add_plugin(CameraPlugin)
-        .add_plugin(WorldPlugin)
-        .add_plugin(LogDiagnosticsPlugin::default())
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugins(PlayerPlugin)
+        .add_plugins(CameraPlugin)
+        .add_plugins(WorldPlugin)
+        .add_plugins(LogDiagnosticsPlugin::default())
+        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .run();
 }

@@ -17,10 +17,8 @@ impl Plugin for WorldPlugin {
         app
             .insert_resource(WorldMap { chunks: HashMap::new(), chunk_entities: HashMap::new() })
             .insert_resource(ChunkQueue { queue: vec![] })
-            .add_startup_system(generate_world_system)
-            .add_system(generate_chunks_from_player_movement)
-            .add_system(deque_chunks)
-            .add_system(unload_far_chunks);
+            .add_systems(Startup, generate_world_system)
+            .add_systems(Update, (generate_chunks_from_player_movement, deque_chunks, unload_far_chunks));
     }
 }
 

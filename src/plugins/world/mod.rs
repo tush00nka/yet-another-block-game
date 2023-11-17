@@ -23,6 +23,12 @@ impl Plugin for WorldPlugin {
 }
 
 #[derive(Resource)]
+pub struct GenerationConfig
+{
+    pub render_distance: i32,
+}
+
+#[derive(Resource)]
 pub struct WorldMap {
     pub chunks: HashMap<(i32, i32), Vec<Vec<Vec<BlockType>>>>,
     pub chunk_entities: HashMap<(i32,i32), Entity>,

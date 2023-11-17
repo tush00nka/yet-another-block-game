@@ -95,7 +95,7 @@ pub fn player_setup_system(
 ) {
     let player = commands.spawn(PbrBundle {
         transform: Transform {
-            translation: Vec3::new(0.0, 130.0, 0.0),
+            translation: Vec3::new(0.0, 96.0, 0.0),
             ..Default::default()
         },
         ..default()
@@ -103,7 +103,7 @@ pub fn player_setup_system(
     .id();
 
     commands.entity(player)
-        .insert(Player { speed: 400.0, jump_force: 10.0 })
+        .insert(Player { speed: 400.0, jump_force: 9.0 })
         .insert(JumpDuration { time: Stopwatch::new()})
         .insert(RigidBody::Dynamic)
         .insert(LockedAxes::ROTATION_LOCKED_Z | LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Y)
@@ -113,7 +113,7 @@ pub fn player_setup_system(
             linvel: Vec3::new(0.0, 0.0, 0.0),
             angvel: Vec3::new(0.0, 0.0, 0.0),
         })
-        .insert(GravityScale(9.8))
+        .insert(GravityScale(6.0))
         .insert(Sleeping::disabled())
         .insert(Ccd::enabled());
 }

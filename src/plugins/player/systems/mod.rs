@@ -1,7 +1,12 @@
-use bevy::{prelude::*, input::mouse::MouseMotion, time::Stopwatch};
+use bevy::{prelude::*, input::mouse::MouseMotion, time::Stopwatch, ecs::event::ManualEventReader};
 use bevy_rapier3d::prelude::*;
 
 use super::components::{Player, PlayerCamera, JumpDuration};
+
+#[derive(Resource, Default)]
+pub struct InputState {
+    reader_motion: ManualEventReader<MouseMotion>,
+}
 
 pub fn movement_system(
     mut player_query: Query<(&mut Velocity, &Player), Without<PlayerCamera>>,
@@ -56,38 +61,31 @@ pub fn camera_rotation_system(
     windows_query: Query<&Window>,
     player_query: Query<&Transform, With<Player>>,
     mut camera_query: Query<(&mut Transform, &mut PlayerCamera), Without<Player>>,
-    mut ev_motion: EventReader<MouseMotion>,
+    mut state: ResMut<InputState>,
+    motion: Res<Events<MouseMotion>>,
 ) {
     let player_transform = player_query.single();
 
-    let mut rotation_move = Vec2::ZERO;
-    for ev in ev_motion.read() {
-            rotation_move += ev.delta;
-    }
-
     let (mut camera_transform, mut player_camera) = camera_query.single_mut();
-
-    if rotation_move.length_squared() > 0.0 {
-        let window = get_primary_window_size(&windows_query);
-        let delta_x = {
-            let delta = rotation_move.x / window.x * std::f32::consts::PI * 2.0;
-            if player_camera.upside_down { -delta } else { delta }
-        };
-        let delta_y = rotation_move.y / window.y * std::f32::consts::PI;
-        let yaw = Quat::from_rotation_y(-delta_x);
-        let pitch = Quat::from_rotation_x(-delta_y);
-        camera_transform.rotation = yaw * camera_transform.rotation; // rotate around global y axis
-        camera_transform.rotation = camera_transform.rotation * pitch; // rotate around local x axis
+    if let Ok(window) = windows_query.get_single()
+    {
+        for ev in state.reader_motion.read(&motion) {
+            let (mut yaw, mut pitch, _) = camera_transform.rotation.to_euler(EulerRot::YXZ);
+    
+            // Using smallest of height or width ensures equal vertical and horizontal sensitivity
+            let window_scale = window.height().min(window.width());
+            pitch -= (0.0006 * ev.delta.y * window_scale).to_radians();
+            yaw -= (0.0006 * ev.delta.x * window_scale).to_radians();
+    
+            pitch = pitch.clamp(-1.57, 1.57);
+    
+            // Order is important to prevent unintended roll
+            camera_transform.rotation = Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
+        }
     }
 
     player_camera.focus = player_transform.translation;
     camera_transform.translation = player_camera.focus + Vec3::new(0.0, 1.0, 0.0);
-}
-
-fn get_primary_window_size(windows: &Query<&Window>) -> Vec2 {
-    let window = windows.single();
-    let window = Vec2::new(window.width() as f32, window.height() as f32);
-    window
 }
 
 pub fn player_setup_system(
@@ -116,4 +114,5 @@ pub fn player_setup_system(
         .insert(GravityScale(6.0))
         .insert(Sleeping::disabled())
         .insert(Ccd::enabled());
+    commands.insert_resource(InputState::default())
 }

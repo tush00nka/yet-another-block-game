@@ -11,6 +11,7 @@ pub enum BlockType {
     Air,
     Dirt,
     Grass,
+    Stone,
 }
 
 impl BlockType {
@@ -32,7 +33,15 @@ impl BlockType {
                 back: vec![Vec2::new(0.2, 0.0), Vec2::new(0.1, 0.0), Vec2::new(0.1, 0.1), Vec2::new(0.2, 0.1)],
                 top: vec![Vec2::new(0.3, 0.0), Vec2::new(0.2, 0.0), Vec2::new(0.2, 0.1), Vec2::new(0.3, 0.1)],
                 bottom: vec![Vec2::new(0.1, 0.0), Vec2::new(0.0, 0.0), Vec2::new(0.0, 0.1), Vec2::new(0.1, 0.1)],
-            }
+            },
+            BlockType::Stone => BlockFaces {
+                left: vec![Vec2::new(0.4, 0.0), Vec2::new(0.3, 0.0), Vec2::new(0.3, 0.1), Vec2::new(0.4, 0.1)],
+                right: vec![Vec2::new(0.4, 0.0), Vec2::new(0.3, 0.0), Vec2::new(0.3, 0.1), Vec2::new(0.4, 0.1)],
+                front: vec![Vec2::new(0.4, 0.0), Vec2::new(0.3, 0.0), Vec2::new(0.3, 0.1), Vec2::new(0.4, 0.1)],
+                back: vec![Vec2::new(0.4, 0.0), Vec2::new(0.3, 0.0), Vec2::new(0.3, 0.1), Vec2::new(0.4, 0.1)],
+                top: vec![Vec2::new(0.4, 0.0), Vec2::new(0.3, 0.0), Vec2::new(0.3, 0.1), Vec2::new(0.4, 0.1)],
+                bottom: vec![Vec2::new(0.4, 0.0), Vec2::new(0.3, 0.0), Vec2::new(0.3, 0.1), Vec2::new(0.4, 0.1)],
+            },
         }
     }
 }

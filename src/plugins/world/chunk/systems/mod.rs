@@ -17,12 +17,19 @@ pub fn generate_chunk_data(
     for x in 0..CHUNK_WIDTH {
         for y in 0..CHUNK_HEIGHT {
             for z in 0..CHUNK_WIDTH {
-                let height = (perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.05, (z as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0 + 64.0).floor();
+                let octave0 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.01, (z as f64 + position.1 as f64 * 16.0) * 0.01]) as f32 * 20.0;
+                let octave1 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.05, (z as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
+                let octave2 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.1, (z as f64 + position.1 as f64 * 16.0) * 0.1]) as f32;
+                let height = (octave0 + octave1 + octave2 + 64.0).floor();
 
                 let mut block_to_assign = BlockType::Air;
 
-                if (y as f32) < height {
+                if (y as f32) < height && (y as f32) > height/2.0 {
                     block_to_assign = BlockType::Dirt;
+                }
+                else if (y as f32) < height / 2.0
+                {
+                    block_to_assign = BlockType::Stone;
                 }
                 else if y == height as usize {
                     block_to_assign = BlockType::Grass;

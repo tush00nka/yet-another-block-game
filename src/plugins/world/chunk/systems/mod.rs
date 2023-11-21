@@ -17,22 +17,40 @@ pub fn generate_chunk_data(
     for x in 0..CHUNK_WIDTH {
         for y in 0..CHUNK_HEIGHT {
             for z in 0..CHUNK_WIDTH {
+                let mut block_to_assign = BlockType::Air;
+
+                // let octave0 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.05, (z as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
+                // let octave1 = perlin.get([(y as f64 + position.0 as f64 * 16.0) * 0.05, (z as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
+                // let octave2 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.05, (y as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
+
+                // let density = (octave0 + octave1 + octave2).floor();
+
+                // if density < 1.0 {
+                //     block_to_assign = BlockType::Stone;
+                // }
+
                 let octave0 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.01, (z as f64 + position.1 as f64 * 16.0) * 0.01]) as f32 * 20.0;
                 let octave1 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.05, (z as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
                 let octave2 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.1, (z as f64 + position.1 as f64 * 16.0) * 0.1]) as f32;
                 let height = (octave0 + octave1 + octave2 + 64.0).floor();
 
-                let mut block_to_assign = BlockType::Air;
-
                 if (y as f32) < height && (y as f32) > height/2.0 {
                     block_to_assign = BlockType::Dirt;
                 }
-                else if (y as f32) < height / 2.0
+                else if (y as f32) <= height / 2.0
                 {
                     block_to_assign = BlockType::Stone;
                 }
                 else if y == height as usize {
                     block_to_assign = BlockType::Grass;
+                }
+
+                if y as f32 == height && height <= 50.0 {
+                    block_to_assign = BlockType::Sand;
+                }
+
+                if y as f32 == 49.0 {
+                    block_to_assign = BlockType::Water;
                 }
 
                 blocks[x][y][z] = block_to_assign;
@@ -73,50 +91,44 @@ pub fn generate_chunk_mesh(
 pub fn build_chunk(
     commands: &mut Commands,
     world_map: &mut ResMut<WorldMap>,
-    chunk_query: &mut Query<&Handle<Mesh>, With<ChunkComponent>>,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
     position: (i32, i32),
 ) {
-    if world_map.chunk_entities.contains_key(&position) { // if there's a spawned chunk, we just replace the old mesh with the rebuilt one
-        if let Ok(chunk) = chunk_query.get_mut(world_map.chunk_entities[&position]) {
-            let mesh = &mut meshes.get_mut(chunk);
-            if mesh.is_some() {
-                *mesh = Some(&mut generate_chunk_mesh(world_map, position));
-            }
-        }
+    if world_map.chunk_entities.contains_key(&position) { // if there's a spawned chunk, we remove it
+        commands.entity(world_map.chunk_entities[&position]).despawn();
+        world_map.chunk_entities.remove(&position);
     }
-    else { // otherwise, we spawn a new chunk entity
-        let texture_handle = asset_server.load("blocks.png");
-        let material_handle = materials.add(StandardMaterial {
-            base_color_texture: Some(texture_handle),
-            unlit: true,
-            ..default()
-        });
-    
-        let mesh = generate_chunk_mesh(world_map, position);
 
-        let chunk = commands.spawn(MaterialMeshBundle {
-            mesh: meshes.add(mesh.clone()),
-            material: material_handle,
-            transform: Transform::from_translation(Vec3::new(position.0 as f32 * CHUNK_WIDTH as f32, 0.0, position.1 as f32  * CHUNK_WIDTH as f32)),
-            ..default()
-        }).insert(ChunkComponent {
-            position,
-            blocks: world_map.chunks[&position].clone(),
-        }).id();
-    
-        // adding a collider, so the world is actually walkable
-        commands.entity(chunk)
-            .insert(Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::TriMesh).unwrap())
-            .insert(Friction {
-            coefficient: 0.0,
-            combine_rule: CoefficientCombineRule::Min,
-        });
+    let texture_handle = asset_server.load("blocks.png");
+    let material_handle = materials.add(StandardMaterial {
+        base_color_texture: Some(texture_handle),
+        unlit: true,
+        ..default()
+    });
 
-        world_map.chunk_entities.insert(position, chunk);
-    }
+    let mesh = generate_chunk_mesh(world_map, position);
+
+    let chunk = commands.spawn(MaterialMeshBundle {
+        mesh: meshes.add(mesh.clone()),
+        material: material_handle,
+        transform: Transform::from_translation(Vec3::new(position.0 as f32 * CHUNK_WIDTH as f32, 0.0, position.1 as f32  * CHUNK_WIDTH as f32)),
+        ..default()
+    }).insert(ChunkComponent {
+        position,
+        blocks: world_map.chunks[&position].clone(),
+    }).id();
+
+    // adding a collider, so the world is actually walkable
+    commands.entity(chunk)
+        .insert(Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::TriMesh).unwrap())
+        .insert(Friction {
+        coefficient: 0.0,
+        combine_rule: CoefficientCombineRule::Min,
+    });
+
+    world_map.chunk_entities.insert(position, chunk);
 }
 
 fn generate_block(

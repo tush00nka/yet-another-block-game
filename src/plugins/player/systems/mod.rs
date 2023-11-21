@@ -1,7 +1,12 @@
 use bevy::{prelude::*, input::mouse::MouseMotion, time::Stopwatch, ecs::event::ManualEventReader};
 use bevy_rapier3d::prelude::*;
 
+use crate::plugins::world::ChunkQueue;
+use crate::plugins::world::systems::enque_chunk;
+use crate::{CHUNK_WIDTH, plugins::world::WorldMap};
+
 use super::components::{Player, PlayerCamera, JumpDuration};
+use super::super::world::chunk::components::BlockType;
 
 #[derive(Resource, Default)]
 pub struct InputState {
@@ -90,6 +95,7 @@ pub fn camera_rotation_system(
 
 pub fn player_setup_system(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
 ) {
     let player = commands.spawn(PbrBundle {
         transform: Transform {
@@ -114,5 +120,95 @@ pub fn player_setup_system(
         .insert(GravityScale(6.0))
         .insert(Sleeping::disabled())
         .insert(Ccd::enabled());
-    commands.insert_resource(InputState::default())
+    commands.insert_resource(InputState::default());
+
+    commands.spawn(ImageBundle {
+        image: asset_server.load("cursor.png").into(),
+        style: Style {
+            width: Val::Px(16.),
+            height: Val::Px(16.),
+            justify_self: JustifySelf::Center,
+            align_self: AlignSelf::Center,
+            ..default()
+        },
+        ..default()
+    });
+}
+
+pub fn block_breaking_system(
+    camera_query: Query<&Transform, (With<PlayerCamera>, Without<Player>)>,
+    rapier_context: Res<RapierContext>,
+    mut world_map: ResMut<WorldMap>,
+    buttons: Res<Input<MouseButton>>,
+    mut chunk_queue: ResMut<ChunkQueue>,
+) {
+    let camera_transform = camera_query.single();
+
+    if buttons.just_pressed(MouseButton::Left) {
+        let origin = camera_transform.translation;
+        let direction: Vec3 = camera_transform.forward();
+    
+        if let Some((_, intersection)) = rapier_context.cast_ray_and_get_normal(origin, direction, 10.0, true, QueryFilter::exclude_dynamic()) {
+            let hit = (intersection.point - intersection.normal * 0.5).floor();
+            let chunk_pos = ((hit.x / CHUNK_WIDTH as f32).floor() as i32, (hit.z / CHUNK_WIDTH as f32).floor() as i32);
+            let (x, y, z) = ((hit.x  - (chunk_pos.0 as f32 * 16.0)) as usize,
+                                              (hit.y) as usize,
+                                              (hit.z - (chunk_pos.1 as f32 * 16.0)) as usize);
+
+            if world_map.chunks[&chunk_pos][x][y][z] != BlockType::Air{
+                world_map.chunks.get_mut(&chunk_pos).unwrap()[x][y][z] = BlockType::Air;
+            }
+
+            enque_chunk(&mut chunk_queue, chunk_pos);
+            // this is cringe, TODO: rework
+            enque_chunk(&mut chunk_queue, (chunk_pos.0-1, chunk_pos.1));
+            enque_chunk(&mut chunk_queue, (chunk_pos.0+1, chunk_pos.1));
+            enque_chunk(&mut chunk_queue, (chunk_pos.0, chunk_pos.1-1));
+            enque_chunk(&mut chunk_queue, (chunk_pos.0, chunk_pos.1+1));
+        }
+    }
+}
+
+pub fn block_placing_system(
+    camera_query: Query<&Transform, (With<PlayerCamera>, Without<Player>)>,
+    rapier_context: Res<RapierContext>,
+    mut world_map: ResMut<WorldMap>,
+    buttons: Res<Input<MouseButton>>,
+    mut chunk_queue: ResMut<ChunkQueue>,
+) {
+    let camera_transform = camera_query.single();
+
+    if buttons.just_pressed(MouseButton::Right) {
+        let origin = camera_transform.translation;
+        let direction: Vec3 = camera_transform.forward();
+    
+        if let Some((_, intersection)) = rapier_context.cast_ray_and_get_normal(origin, direction, 10.0, true, QueryFilter::exclude_dynamic()) {
+            let hit = (intersection.point + intersection.normal * 0.5).floor();
+            let chunk_pos = ((hit.x / CHUNK_WIDTH as f32).floor() as i32, (hit.z / CHUNK_WIDTH as f32).floor() as i32);
+            let (x, y, z) = ((hit.x  - (chunk_pos.0 as f32 * 16.0)) as usize,
+                                              (hit.y) as usize,
+                                              (hit.z - (chunk_pos.1 as f32 * 16.0)) as usize);
+
+            if world_map.chunks[&chunk_pos][x][y][z] == BlockType::Air {
+                world_map.chunks.get_mut(&chunk_pos).unwrap()[x][y][z] = BlockType::Stone;
+            }
+
+            enque_chunk(&mut chunk_queue, chunk_pos);
+            // this is cringe, TODO: rework
+            enque_chunk(&mut chunk_queue, (chunk_pos.0-1, chunk_pos.1));
+            enque_chunk(&mut chunk_queue, (chunk_pos.0+1, chunk_pos.1));
+            enque_chunk(&mut chunk_queue, (chunk_pos.0, chunk_pos.1-1));
+            enque_chunk(&mut chunk_queue, (chunk_pos.0, chunk_pos.1+1));
+        }
+    }
+}
+
+pub fn lock_cursor(
+        mut windows_query: Query<&mut Window>,
+) {
+    if let Ok(mut window) = windows_query.get_single_mut() {
+        let cur_pos = Vec2::new(window.width() / 2., window.height() / 2.);
+		window.set_cursor_position(Some(cur_pos));
+        window.cursor.visible = false;
+    }
 }

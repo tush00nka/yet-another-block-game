@@ -83,11 +83,10 @@ pub fn deque_chunks(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut world_map: ResMut<WorldMap>,
     mut chunk_queue: ResMut<ChunkQueue>,
-    mut chunk_query: Query<&Handle<Mesh>, With<ChunkComponent>>,
     asset_server: Res<AssetServer>,
 ) {
-    if chunk_queue.queue.len() > 0 {
-        build_chunk(&mut commands, &mut world_map, &mut chunk_query, &mut meshes, &mut materials,  asset_server, chunk_queue.queue[0]);
+    if chunk_queue.queue.len() > 0 && world_map.chunks.contains_key(&chunk_queue.queue[0]){
+        build_chunk(&mut commands, &mut world_map, &mut meshes, &mut materials,  asset_server, chunk_queue.queue[0]);
         chunk_queue.queue.remove(0);
     }
 }

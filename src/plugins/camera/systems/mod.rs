@@ -7,7 +7,7 @@ pub fn setup_camera_system(
 ) {
     commands.spawn(Camera3dBundle {
         transform: Transform {
-            translation: Vec3::new(12.0, 3.0, 24.0),
+            translation: Vec3::ZERO,
             ..default()
         },
         projection: Projection::Perspective(PerspectiveProjection {

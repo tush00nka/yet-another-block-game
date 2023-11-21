@@ -1,4 +1,4 @@
-use bevy::{prelude::*, diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, window::PresentMode};
+use bevy::{prelude::*, window::{PresentMode, WindowResolution}};
 use bevy_rapier3d::prelude::{RapierPhysicsPlugin, NoUserData};
 use plugins::{camera::CameraPlugin, world::WorldPlugin, player::PlayerPlugin};
 
@@ -14,6 +14,7 @@ fn main() {
             primary_window: Some(Window {
                 title: "yet another block game".to_string(),
                 present_mode: PresentMode::AutoVsync,
+                resolution: WindowResolution::new(1280.0, 720.0),
                 ..default()
             }),
             ..default()
@@ -21,8 +22,6 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .add_plugins(CameraPlugin)
         .add_plugins(WorldPlugin)
-        .add_plugins(LogDiagnosticsPlugin::default())
-        .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .run();
 }

@@ -5,7 +5,7 @@ use noise::Perlin;
 
 use crate::{RENDER_DISTANCE, CHUNK_WIDTH, plugins::player::components::Player};
 
-use super::{chunk::{systems::{generate_chunk_data, build_chunk}, components::ChunkComponent}, WorldMap, SeededPerlin, ChunkQueue, GenerationConfig};
+use super::{chunk::{systems::{generate_chunk_data, build_chunk}, components::ChunkComponent}, WorldMap, SeededPerlin, ChunkQueue};
 
 pub fn generate_world_system(
     mut commands: Commands,
@@ -14,20 +14,18 @@ pub fn generate_world_system(
     let perlin = Perlin::new(seed);
 
     commands.insert_resource(SeededPerlin { noise: perlin });
-    commands.insert_resource(GenerationConfig{ render_distance: 2 });
 }
 
 pub fn generate_chunks_from_player_movement(
     player_query: Query<&Transform, With<Player>>,
     mut world_map: ResMut<WorldMap>,
     perlin: Res<SeededPerlin>,
-    mut gen_config: ResMut<GenerationConfig>,
     mut chunk_queue: ResMut<ChunkQueue>,
 ) {
     let player_transform = player_query.single();
     let (chunk_x, chunk_z) = ((player_transform.translation.x / CHUNK_WIDTH as f32).round() as i32, (player_transform.translation.z / CHUNK_WIDTH as f32).round() as i32);
 
-    let render_distance = gen_config.render_distance;
+    let render_distance = RENDER_DISTANCE;
 
     for x in -(render_distance + 1)..(render_distance + 1) {
         for z in -(render_distance + 1)..(render_distance + 1) {
@@ -45,11 +43,6 @@ pub fn generate_chunks_from_player_movement(
             }
         }
     }
-
-    if render_distance != RENDER_DISTANCE //this is definetely a wrong way to do this, but for now it works
-    {
-        gen_config.render_distance = RENDER_DISTANCE;
-    }
 }
 
 pub fn unload_far_chunks(
@@ -57,13 +50,12 @@ pub fn unload_far_chunks(
     chunk_query: Query<(&ChunkComponent, Entity)>,
     player_query: Query<&Transform, With<Player>>,
     mut world_map: ResMut<WorldMap>,
-    gen_config: Res<GenerationConfig>,
 ) {
     let player_transform = player_query.single();
     let (chunk_x, chunk_z) = ((player_transform.translation.x / CHUNK_WIDTH as f32).round() as i32, (player_transform.translation.z / CHUNK_WIDTH as f32).round() as i32);
     
     for (component, chunk) in chunk_query.iter() {
-        if (chunk_x - component.position.0).abs() > gen_config.render_distance ||  (chunk_z - component.position.1).abs() > gen_config.render_distance {
+        if (chunk_x - component.position.0).abs() > RENDER_DISTANCE ||  (chunk_z - component.position.1).abs() > RENDER_DISTANCE {
             world_map.chunk_entities.remove(&component.position);
             commands.entity(chunk).despawn();
         }
@@ -84,9 +76,38 @@ pub fn deque_chunks(
     mut world_map: ResMut<WorldMap>,
     mut chunk_queue: ResMut<ChunkQueue>,
     asset_server: Res<AssetServer>,
+    player_query: Query<&Transform, With<Player>>,
 ) {
-    if chunk_queue.queue.len() > 0 && world_map.chunks.contains_key(&chunk_queue.queue[0]){
-        build_chunk(&mut commands, &mut world_map, &mut meshes, &mut materials,  asset_server, chunk_queue.queue[0]);
-        chunk_queue.queue.remove(0);
+    if chunk_queue.queue.len() > 0 { 
+        if let Ok(player_transform) = player_query.get_single() {
+            let position = ((player_transform.translation.x / CHUNK_WIDTH as f32).floor() as i32, (player_transform.translation.z / CHUNK_WIDTH as f32).floor() as i32);
+            let closest_index = get_closest_chunk_from_queue(&chunk_queue.queue, position);
+            let chunk = chunk_queue.queue[closest_index];
+
+            if world_map.chunks.contains_key(&chunk) {
+                build_chunk(&mut commands, &mut world_map, &mut meshes, &mut materials,  asset_server, chunk);
+                chunk_queue.queue.remove(closest_index);
+            }
+        }
     }
+}
+
+fn get_closest_chunk_from_queue(
+    queue: &Vec<(i32, i32)>,
+    position: (i32,i32),
+) -> usize {
+    let mut closest = (100, 100);
+    let mut index = 0;
+
+    for i in 0..queue.len() {
+        let distance_chunk = (((queue[i].0 - position.0).pow(2) + (queue[i].1 - position.1).pow(2)) as f32).sqrt();
+        let distance_closest = (((closest.0 - position.0).pow(2) + (closest.1 - position.1).pow(2)) as f32).sqrt();
+        println!("{},{}", distance_chunk, distance_closest);
+        if distance_chunk < distance_closest {
+            closest = queue[i];
+            index = i;
+        }
+    }
+
+    index
 }

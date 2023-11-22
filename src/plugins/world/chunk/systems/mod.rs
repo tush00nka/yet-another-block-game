@@ -5,7 +5,11 @@ use noise::{Perlin, NoiseFn};
 
 use crate::{CHUNK_WIDTH, CHUNK_HEIGHT, plugins::world::WorldMap};
 
+use self::structures_generation::add_tree;
+
 use super::components::{ChunkComponent, BlockType};
+
+mod structures_generation;
 
 pub fn generate_chunk_data(
     perlin: Perlin,
@@ -19,46 +23,62 @@ pub fn generate_chunk_data(
             for z in 0..CHUNK_WIDTH {
                 let mut block_to_assign = BlockType::Air;
 
-                // let octave0 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.05, (z as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
-                // let octave1 = perlin.get([(y as f64 + position.0 as f64 * 16.0) * 0.05, (z as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
-                // let octave2 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.05, (y as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
+                let height = height_by_coords(perlin, x, z, position);
 
-                // let density = (octave0 + octave1 + octave2).floor();
-
-                // if density < 1.0 {
-                //     block_to_assign = BlockType::Stone;
-                // }
-
-                let octave0 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.01, (z as f64 + position.1 as f64 * 16.0) * 0.01]) as f32 * 20.0;
-                let octave1 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.05, (z as f64 + position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
-                let octave2 = perlin.get([(x as f64 + position.0 as f64 * 16.0) * 0.1, (z as f64 + position.1 as f64 * 16.0) * 0.1]) as f32;
-                let height = (octave0 + octave1 + octave2 + 64.0).floor();
-
-                if (y as f32) < height && (y as f32) > height/2.0 {
+                if y < height && y > height/2 {
                     block_to_assign = BlockType::Dirt;
                 }
-                else if (y as f32) <= height / 2.0
+                else if y <= height / 2
                 {
                     block_to_assign = BlockType::Stone;
                 }
-                else if y == height as usize {
+                else if y == height {
                     block_to_assign = BlockType::Grass;
                 }
 
-                if y as f32 == height && height <= 50.0 {
+                if y == height && height <= 50 {
                     block_to_assign = BlockType::Sand;
                 }
 
-                if y as f32 == 49.0 {
+                if y < 50 && y > height {
                     block_to_assign = BlockType::Water;
                 }
 
-                blocks[x][y][z] = block_to_assign;
+                blocks[x][y][z] = block_to_assign;   
             }
         }
     }
+    // if height_by_coords(perlin, 0, 0, position) > 50 {
+    //     blocks = add_tree(position, 0, height_by_coords(perlin, 0, 0, position), 0, world_map, blocks);
+    // }
 
-    world_map.chunks.insert((position.0, position.1), blocks.clone());
+    if world_map.reserved_chunk_data.contains_key(&position) {
+        println!("{:?}", world_map.reserved_chunk_data.len());
+        for x in 0..CHUNK_WIDTH {
+            for y in 0..CHUNK_HEIGHT {
+                for z in 0..CHUNK_WIDTH {
+                    if world_map.reserved_chunk_data[&position][x][y][z] != BlockType::Air {
+                        blocks[x][y][z] = world_map.reserved_chunk_data[&position][x][y][z];
+                    }
+                }
+            }
+        }
+        world_map.reserved_chunk_data.remove(&position);
+    }
+
+    world_map.chunks.insert(position, blocks);
+}
+
+fn height_by_coords(
+    perlin: Perlin,
+    x: usize, z: usize,
+    chunk_position: (i32, i32),
+) -> usize{
+    let octave0 = perlin.get([(x as f64 + chunk_position.0 as f64 * 16.0) * 0.01, (z as f64 + chunk_position.1 as f64 * 16.0) * 0.01]) as f32 * 20.0;
+    let octave1 = perlin.get([(x as f64 + chunk_position.0 as f64 * 16.0) * 0.05, (z as f64 + chunk_position.1 as f64 * 16.0) * 0.05]) as f32 * 4.0;
+    let octave2 = perlin.get([(x as f64 + chunk_position.0 as f64 * 16.0) * 0.1, (z as f64 + chunk_position.1 as f64 * 16.0) * 0.1]) as f32;
+    let height = (octave0 + octave1 + octave2 + 64.0).floor();
+    height as usize
 }
 
 pub fn generate_chunk_mesh(

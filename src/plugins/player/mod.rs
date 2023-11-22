@@ -1,6 +1,7 @@
 use bevy::{prelude::Plugin, app::{Startup, Update}};
 
-use self::systems::{movement_system, jump_system, camera_rotation_system, player_setup_system, block_breaking_system, lock_cursor, block_placing_system};
+use self::systems::player_movement::{movement_system, jump_system, camera_rotation_system, player_setup_system, lock_cursor};
+use self::systems::block_manipulation::{block_breaking_system, block_placing_system};
 
 pub(crate) mod systems;
 pub(crate) mod components;

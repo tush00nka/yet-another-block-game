@@ -11,9 +11,12 @@ pub fn generate_world_system(
     mut commands: Commands,
 ) {
     let seed = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).expect("[E] SystemTime before UNIX EPOCH!").as_secs() as u32;
-    let perlin = Perlin::new(seed);
+    let terrain_perlin = Perlin::new(seed);
+    let tree_perlin = Perlin::new(seed*2);
+    let temperature_perlin = Perlin::new(seed+20);
+    let moisture_perlin = Perlin::new(seed+30);
 
-    commands.insert_resource(SeededPerlin { noise: perlin });
+    commands.insert_resource(SeededPerlin { terrain_noise: terrain_perlin, tree_noise: tree_perlin, temperature_noise: temperature_perlin, moisture_noise: moisture_perlin});
 }
 
 pub fn generate_chunks_from_player_movement(
@@ -30,7 +33,7 @@ pub fn generate_chunks_from_player_movement(
     for x in -(render_distance + 1)..(render_distance + 1) {
         for z in -(render_distance + 1)..(render_distance + 1) {
             if !world_map.chunks.contains_key(&(chunk_x + x, chunk_z + z)) {
-                generate_chunk_data(perlin.noise, (chunk_x + x, chunk_z + z), &mut world_map);
+                generate_chunk_data(&perlin, (chunk_x + x, chunk_z + z), &mut world_map);
             }
         }
     }

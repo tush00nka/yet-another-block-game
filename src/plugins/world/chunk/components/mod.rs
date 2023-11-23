@@ -16,9 +16,18 @@ pub enum BlockType {
     Water,
     WoodLog,
     Leaves,
+    Cactus,
 }
 
 impl BlockType {
+    pub fn is_transparent(&self) -> bool {
+        match self {
+            BlockType::Air => true,
+            BlockType::Water => false,
+            _ => false,
+        }
+    }
+
     pub fn uvs(&self) -> BlockFaces {
         match self {
             BlockType::Air => BlockFaces::new(),
@@ -77,6 +86,14 @@ impl BlockType {
                 back: vec![Vec2::new(0.9, 0.0), Vec2::new(0.8, 0.0), Vec2::new(0.8, 0.1), Vec2::new(0.9, 0.1)],
                 top: vec![Vec2::new(0.9, 0.0), Vec2::new(0.8, 0.0), Vec2::new(0.8, 0.1), Vec2::new(0.9, 0.1)],
                 bottom: vec![Vec2::new(0.9, 0.0), Vec2::new(0.8, 0.0), Vec2::new(0.8, 0.1), Vec2::new(0.9, 0.1)],
+            },
+            BlockType::Cactus => BlockFaces {
+                left: vec![Vec2::new(0.8, 0.1), Vec2::new(0.7, 0.1), Vec2::new(0.7, 0.2), Vec2::new(0.8, 0.2)],
+                right: vec![Vec2::new(0.8, 0.1), Vec2::new(0.7, 0.1), Vec2::new(0.7, 0.2), Vec2::new(0.8, 0.2)],
+                front: vec![Vec2::new(0.8, 0.1), Vec2::new(0.7, 0.1), Vec2::new(0.7, 0.2), Vec2::new(0.8, 0.2)],
+                back: vec![Vec2::new(0.8, 0.1), Vec2::new(0.7, 0.1), Vec2::new(0.7, 0.2), Vec2::new(0.8, 0.2)],
+                top: vec![Vec2::new(0.7, 0.1), Vec2::new(0.6, 0.1), Vec2::new(0.6, 0.2), Vec2::new(0.7, 0.2)],
+                bottom: vec![Vec2::new(0.7, 0.1), Vec2::new(0.6, 0.1), Vec2::new(0.6, 0.2), Vec2::new(0.7, 0.2)],
             },
         }
     }

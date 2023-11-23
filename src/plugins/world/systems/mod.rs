@@ -37,7 +37,6 @@ pub fn generate_chunks_from_player_movement(
 
     for x in -render_distance..render_distance {
         for z in -render_distance..render_distance {
-
             if !chunk_queue.queue.contains(&(chunk_x + x, chunk_z + z)) && !world_map.chunk_entities.contains_key(&(chunk_x + x, chunk_z + z)) {
                 enque_chunk(&mut chunk_queue, (chunk_x + x, chunk_z + z));
             }
@@ -85,8 +84,8 @@ pub fn deque_chunks(
             let chunk = chunk_queue.queue[closest_index];
 
             if world_map.chunks.contains_key(&chunk) {
-                build_chunk(&mut commands, &mut world_map, &mut meshes, &mut materials,  asset_server, chunk);
                 chunk_queue.queue.remove(closest_index);
+                build_chunk(&mut commands, &mut world_map, &mut meshes, &mut materials, asset_server, chunk);
             }
         }
     }
@@ -102,7 +101,6 @@ fn get_closest_chunk_from_queue(
     for i in 0..queue.len() {
         let distance_chunk = (((queue[i].0 - position.0).pow(2) + (queue[i].1 - position.1).pow(2)) as f32).sqrt();
         let distance_closest = (((closest.0 - position.0).pow(2) + (closest.1 - position.1).pow(2)) as f32).sqrt();
-        println!("{},{}", distance_chunk, distance_closest);
         if distance_chunk < distance_closest {
             closest = queue[i];
             index = i;

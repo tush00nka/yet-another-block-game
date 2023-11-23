@@ -48,22 +48,8 @@ pub fn generate_chunk_data(
             }
         }
     }
-    // if height_by_coords(perlin, 0, 0, position) > 50 {
-    //     blocks = add_tree(position, 0, height_by_coords(perlin, 0, 0, position), 0, world_map, blocks);
-    // }
-
-    if world_map.reserved_chunk_data.contains_key(&position) {
-        println!("{:?}", world_map.reserved_chunk_data.len());
-        for x in 0..CHUNK_WIDTH {
-            for y in 0..CHUNK_HEIGHT {
-                for z in 0..CHUNK_WIDTH {
-                    if world_map.reserved_chunk_data[&position][x][y][z] != BlockType::Air {
-                        blocks[x][y][z] = world_map.reserved_chunk_data[&position][x][y][z];
-                    }
-                }
-            }
-        }
-        world_map.reserved_chunk_data.remove(&position);
+    if height_by_coords(perlin, 15, 15, position) > 50 {
+        blocks = add_tree(position, 15, height_by_coords(perlin, 15, 15, position), 15, world_map, blocks);
     }
 
     world_map.chunks.insert(position, blocks);
@@ -119,6 +105,21 @@ pub fn build_chunk(
     if world_map.chunk_entities.contains_key(&position) { // if there's a spawned chunk, we remove it
         commands.entity(world_map.chunk_entities[&position]).despawn();
         world_map.chunk_entities.remove(&position);
+    }
+
+    if world_map.reserved_chunk_data.contains_key(&position) {
+        let mut blocks = world_map.chunks[&position].clone();
+        for x in 0..CHUNK_WIDTH {
+            for y in 0..CHUNK_HEIGHT {
+                for z in 0..CHUNK_WIDTH {
+                    if world_map.reserved_chunk_data[&position][x][y][z] != BlockType::Air {
+                        blocks[x][y][z] = world_map.reserved_chunk_data[&position][x][y][z];
+                    }
+                }
+            }
+        }
+        world_map.chunks.insert(position, blocks);
+        world_map.reserved_chunk_data.remove(&position);
     }
 
     let texture_handle = asset_server.load("blocks.png");

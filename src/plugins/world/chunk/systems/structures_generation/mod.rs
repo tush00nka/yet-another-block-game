@@ -2,8 +2,6 @@ use bevy::prelude::*;
 
 use crate::{plugins::world::{WorldMap, chunk::components::BlockType}, CHUNK_WIDTH, CHUNK_HEIGHT};
 
-
-
 pub fn add_tree(
     chunk_pos: (i32, i32),
     x: usize, y: usize, z: usize,
@@ -16,6 +14,19 @@ pub fn add_tree(
     let mut reserved_blocks_neg_x = vec![vec![vec![BlockType::Air; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH];
     let mut reserved_blocks_z = vec![vec![vec![BlockType::Air; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH];
     let mut reserved_blocks_neg_z = vec![vec![vec![BlockType::Air; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH];
+
+    if world_map.reserved_chunk_data.contains_key(&(chunk_pos.0 + 1, chunk_pos.1)) {
+        reserved_blocks_x = world_map.reserved_chunk_data[&(chunk_pos.0 + 1, chunk_pos.1)].clone();
+    }
+    if world_map.reserved_chunk_data.contains_key(&(chunk_pos.0 - 1, chunk_pos.1)) {
+        reserved_blocks_neg_x = world_map.reserved_chunk_data[&(chunk_pos.0 - 1, chunk_pos.1)].clone();
+    }
+    if world_map.reserved_chunk_data.contains_key(&(chunk_pos.0, chunk_pos.1 + 1)) {
+        reserved_blocks_z = world_map.reserved_chunk_data[&(chunk_pos.0, chunk_pos.1 + 1)].clone();
+    }
+    if world_map.reserved_chunk_data.contains_key(&(chunk_pos.0, chunk_pos.1 - 1)) {
+        reserved_blocks_neg_z = world_map.reserved_chunk_data[&(chunk_pos.0, chunk_pos.1 - 1)].clone();
+    }
 
     let mut need_x = false;
     let mut need_neg_x = false;
@@ -63,10 +74,10 @@ pub fn add_tree(
         }
     }
 
-    if need_x && !world_map.reserved_chunk_data.contains_key(&(chunk_pos.0 + 1, chunk_pos.1)) {world_map.reserved_chunk_data.insert((chunk_pos.0 + 1, chunk_pos.1), reserved_blocks_x);}
-    if need_neg_x && !world_map.reserved_chunk_data.contains_key(&(chunk_pos.0 - 1, chunk_pos.1)) {world_map.reserved_chunk_data.insert((chunk_pos.0 - 1, chunk_pos.1), reserved_blocks_neg_x);}
-    if need_z && !world_map.reserved_chunk_data.contains_key(&(chunk_pos.0, chunk_pos.1 + 1)) {world_map.reserved_chunk_data.insert((chunk_pos.0, chunk_pos.1 + 1), reserved_blocks_z);}
-    if need_neg_z  && !world_map.reserved_chunk_data.contains_key(&(chunk_pos.0, chunk_pos.1 - 1)) {world_map.reserved_chunk_data.insert((chunk_pos.0, chunk_pos.1 - 1), reserved_blocks_neg_z);}
+    if need_x {world_map.reserved_chunk_data.insert((chunk_pos.0 + 1, chunk_pos.1), reserved_blocks_x);}
+    if need_neg_x {world_map.reserved_chunk_data.insert((chunk_pos.0 - 1, chunk_pos.1), reserved_blocks_neg_x);}
+    if need_z {world_map.reserved_chunk_data.insert((chunk_pos.0, chunk_pos.1 + 1), reserved_blocks_z);}
+    if need_neg_z {world_map.reserved_chunk_data.insert((chunk_pos.0, chunk_pos.1 - 1), reserved_blocks_neg_z);}
 
     blocks
 }

@@ -106,6 +106,7 @@ pub fn generate_chunk_mesh(
     let mut indices: Vec<u32> = vec![];
     let mut normals: Vec<Vec3> = vec![];
     let mut uvs: Vec<Vec2> = vec![];
+    let mut colors: Vec<[f32; 4]> = vec![];
 
     for x in 0..CHUNK_WIDTH {
         for y in 0..CHUNK_HEIGHT{
@@ -115,12 +116,182 @@ pub fn generate_chunk_mesh(
         }
     }
 
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, verticies);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-    mesh.set_indices(Some(mesh::Indices::U32(indices)));
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, verticies.clone());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals.clone());
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.set_indices(Some(mesh::Indices::U32(indices)));
+
+    calculate_ao(&mut colors, position, &world_map.chunks);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
 
     mesh
+}
+
+fn calculate_ao(
+    colors: &mut Vec<[f32; 4]>,
+    chunk_position: (i32, i32),
+    chunks: &HashMap<(i32,i32), Vec<Vec<Vec<BlockType>>>>,
+) {
+    for x in 0..CHUNK_WIDTH {
+        for y in 0..CHUNK_HEIGHT {
+            for z in 0..CHUNK_WIDTH {
+                if chunks[&chunk_position][x][y][z] != BlockType::Air {
+                    let x = x as i32;
+                    let y = y as i32;
+                    let z = z as i32;
+
+                    if block_at_position(chunks, (x as i32 + 1, y as i32, z as i32), chunk_position).is_transparent()
+                    && !block_at_position(chunks, (x as i32, y as i32, z as i32), chunk_position).is_transparent() {
+                        let neighbors = [
+                            block_at_position(chunks, (x + 1, y, z - 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y - 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y - 1, z), chunk_position),
+                            block_at_position(chunks, (x + 1, y - 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y, z + 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y + 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y + 1, z), chunk_position),
+                            block_at_position(chunks, (x + 1, y + 1, z - 1), chunk_position),
+                        ];
+                        let darks = side_ao(neighbors);
+                        colors.append(&mut vec![[darks[0], darks[0], darks[0], 1.],
+                                                [darks[1], darks[1], darks[1], 1.],
+                                                [darks[2], darks[2], darks[2], 1.],
+                                                [darks[3], darks[3], darks[3], 1.]]);
+                    }
+
+                    if block_at_position(chunks, (x as i32 - 1, y as i32, z as i32), chunk_position).is_transparent()
+                    && !block_at_position(chunks, (x as i32, y as i32, z as i32), chunk_position).is_transparent() {
+                
+                        let neighbors = [
+                            block_at_position(chunks, (x - 1, y, z + 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y - 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y - 1, z), chunk_position),
+                            block_at_position(chunks, (x - 1, y - 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y, z - 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y + 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y + 1, z), chunk_position),
+                            block_at_position(chunks, (x - 1, y + 1, z + 1), chunk_position),
+                        ];
+                        let darks = side_ao(neighbors);
+                        colors.append(&mut vec![[darks[0], darks[0], darks[0], 1.],
+                                                [darks[1], darks[1], darks[1], 1.],
+                                                [darks[2], darks[2], darks[2], 1.],
+                                                [darks[3], darks[3], darks[3], 1.]]);
+                    }
+                    if block_at_position(chunks, (x as i32, y as i32, z as i32 + 1), chunk_position).is_transparent()
+                    && !block_at_position(chunks, (x as i32, y as i32, z as i32), chunk_position).is_transparent() {
+                        let neighbors = [
+                            block_at_position(chunks, (x + 1, y, z + 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y - 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x, y - 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y - 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y, z + 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y + 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x, y + 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y + 1, z + 1), chunk_position),
+                        ];
+                        let darks = side_ao(neighbors);
+                        colors.append(&mut vec![[darks[0], darks[0], darks[0], 1.],
+                                                [darks[1], darks[1], darks[1], 1.],
+                                                [darks[2], darks[2], darks[2], 1.],
+                                                [darks[3], darks[3], darks[3], 1.]]);
+                    }
+                    if block_at_position(chunks, (x as i32, y as i32, z as i32 - 1), chunk_position).is_transparent()
+                    && !block_at_position(chunks, (x as i32, y as i32, z as i32), chunk_position).is_transparent() {
+
+                        let neighbors = [
+                            block_at_position(chunks, (x - 1, y, z - 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y - 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x, y - 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y - 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y, z - 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y + 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x, y + 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y + 1, z - 1), chunk_position),
+                        ];
+                        let darks = side_ao(neighbors);
+                        colors.append(&mut vec![[darks[0], darks[0], darks[0], 1.],
+                                                [darks[1], darks[1], darks[1], 1.],
+                                                [darks[2], darks[2], darks[2], 1.],
+                                                [darks[3], darks[3], darks[3], 1.]]);
+                    }
+
+                    if block_at_position(chunks, (x as i32, y as i32 + 1, z as i32), chunk_position).is_transparent()
+                    && !block_at_position(chunks, (x as i32, y as i32, z as i32), chunk_position).is_transparent() {
+                
+                        let neighbors = [
+                            block_at_position(chunks, (x, y + 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y + 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y + 1, z), chunk_position),
+                            block_at_position(chunks, (x - 1, y + 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x, y + 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y + 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y + 1, z), chunk_position),
+                            block_at_position(chunks, (x + 1, y + 1, z + 1), chunk_position),   
+                        ];
+                        let darks = side_ao(neighbors);
+                        colors.append(&mut vec![
+                            [darks[0], darks[0], darks[0], 1.],
+                            [darks[1], darks[1], darks[1], 1.],
+                            [darks[2], darks[2], darks[2], 1.],
+                            [darks[3], darks[3], darks[3], 1.],
+                        ]);
+                    }
+
+                    if block_at_position(chunks, (x as i32, y as i32 - 1, z as i32), chunk_position).is_transparent()
+                    && !block_at_position(chunks, (x as i32, y as i32, z as i32), chunk_position).is_transparent() {
+                
+                        let neighbors = [
+                            block_at_position(chunks, (x - 1, y - 1, z), chunk_position),
+                            block_at_position(chunks, (x - 1, y - 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x, y - 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y - 1, z + 1), chunk_position),
+                            block_at_position(chunks, (x + 1, y - 1, z), chunk_position),
+                            block_at_position(chunks, (x + 1, y - 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x, y - 1, z - 1), chunk_position),
+                            block_at_position(chunks, (x - 1, y - 1, z - 1), chunk_position),
+                        ];
+                        let darks = side_ao(neighbors);
+                        colors.append(&mut vec![[darks[0], darks[0], darks[0], 1.],
+                                                [darks[1], darks[1], darks[1], 1.],
+                                                [darks[2], darks[2], darks[2], 1.],
+                                                [darks[3], darks[3], darks[3], 1.]]); 
+                    }
+            
+                }
+            }
+        }
+    }
+}
+
+fn ao_value(side1: bool, corner: bool, side2: bool) -> u32 {
+    match (side1, corner, side2) {
+        (true, _, true) => 0,
+        (true, true, false) | (false, true, true) => 1,
+        (false, false, false) => 3,
+        _ => 2,
+    }
+}
+
+fn side_ao(neighbors: [BlockType; 8]) -> [f32; 4] {
+    let ns = [
+        neighbors[0].is_transparent(),
+        neighbors[1].is_transparent(),
+        neighbors[2].is_transparent(),
+        neighbors[3].is_transparent(),
+        neighbors[4].is_transparent(),
+        neighbors[5].is_transparent(),
+        neighbors[6].is_transparent(),
+        neighbors[7].is_transparent(),
+    ];
+
+    [
+        1.0 - ao_value(ns[6], ns[7], ns[0]) as f32 * 0.25,
+        1.0 - ao_value(ns[4], ns[5], ns[6]) as f32 * 0.25,
+        1.0 - ao_value(ns[2], ns[3], ns[4]) as f32 * 0.25,
+        1.0 - ao_value(ns[0], ns[1], ns[2]) as f32 * 0.25,
+
+    ]
 }
 
 pub fn build_chunk(
@@ -154,7 +325,9 @@ pub fn build_chunk(
     let texture_handle = asset_server.load("blocks.png");
     let material_handle = materials.add(StandardMaterial {
         base_color_texture: Some(texture_handle),
-        unlit: true,
+        unlit: false,
+        perceptual_roughness: 0.0,
+        reflectance: 0.0,
         ..default()
     });
 
@@ -174,9 +347,9 @@ pub fn build_chunk(
     commands.entity(chunk)
         .insert(Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::TriMesh).unwrap())
         .insert(Friction {
-        coefficient: 0.0,
-        combine_rule: CoefficientCombineRule::Min,
-    });
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        });
 
     world_map.chunk_entities.insert(position, chunk);
 }
@@ -198,7 +371,7 @@ fn generate_block(
     }
 
     // right side
-    if block_at_position(chunks, (x as i32 +1, y as i32, z as i32), *chunk_position).is_transparent()
+    if block_at_position(chunks, (x as i32 + 1, y as i32, z as i32), *chunk_position).is_transparent()
     && !block_at_position(chunks, (x as i32, y as i32, z as i32), *chunk_position).is_transparent() {
 
         verticies.extend([
@@ -207,7 +380,7 @@ fn generate_block(
             [x + 1.0, y + 0.0, z + 1.0],
             [x + 1.0, y + 0.0, z + 0.0],
         ]);
-    
+
         normals.extend([Vec3::NEG_X, Vec3::NEG_X, Vec3::NEG_X, Vec3::NEG_X]);
     
         add_indices(indices, (verticies.len() - 4) as u32);
@@ -292,7 +465,6 @@ fn generate_block(
             [x + 0.0, y + 1.0, z + 0.0],
             [x + 0.0, y + 1.0, z + 1.0]
         ]);
-
         normals.extend([Vec3::Y, Vec3::Y, Vec3::Y, Vec3::Y]);
 
         add_indices(indices, (verticies.len() - 4) as u32);

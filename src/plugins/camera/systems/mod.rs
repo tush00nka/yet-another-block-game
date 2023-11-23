@@ -6,6 +6,10 @@ pub fn setup_camera_system(
     mut commands: Commands,
 ) {
     commands.spawn(Camera3dBundle {
+        camera: Camera {
+            hdr: true,
+            ..default()
+        },
         transform: Transform {
             translation: Vec3::ZERO,
             ..default()
@@ -23,8 +27,8 @@ pub fn setup_light_system(
     mut commands: Commands,
 ) {
     commands.insert_resource(AmbientLight {
-        color: Color::WHITE,
-        brightness: 1.0
+        brightness: 2.0,
+        ..default()
     });
 
     commands.insert_resource(ClearColor(Color::hex("8fd3ff").unwrap()));

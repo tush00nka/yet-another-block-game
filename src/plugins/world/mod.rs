@@ -31,6 +31,7 @@ pub struct WorldMap {
 
 #[derive(Resource)]
 pub struct SeededPerlin {
+    pub seed: u32,
     pub terrain_noise: Perlin,
     pub tree_noise: Perlin,
     pub temperature_noise: Perlin,

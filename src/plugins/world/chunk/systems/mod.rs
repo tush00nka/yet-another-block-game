@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh}};
 use bevy_rapier3d::prelude::{Collider, ComputedColliderShape, Friction, CoefficientCombineRule};
 use noise::{Perlin, NoiseFn};
+use rand::{rngs::StdRng, SeedableRng, Rng};
 
 use crate::{CHUNK_WIDTH, CHUNK_HEIGHT, plugins::world::{WorldMap, SeededPerlin}};
 
@@ -19,6 +20,8 @@ pub fn generate_chunk_data(
     let mut blocks = vec![vec![vec![BlockType::Air; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH];
 
     let mut tree_positions = vec![];
+
+    let mut random = StdRng::seed_from_u64(perlin.seed as u64);
 
     for x in 0..CHUNK_WIDTH {
         for y in 0..CHUNK_HEIGHT {
@@ -60,7 +63,8 @@ pub fn generate_chunk_data(
                     block_to_assign = BlockType::Water;
                 }
 
-                if tree_value > 0.5 && y == height && x%10==0 && z%10==0 && height >= 50 {
+                let tree_chance = random.gen_range(-1.0..tree_value.abs());
+                if tree_value > 0.5 && tree_chance > 0.8 && y == height && height >= 50 {
                     tree_positions.push((x,y,z));
                 }
 
@@ -74,10 +78,10 @@ pub fn generate_chunk_data(
         let moisture = perlin.moisture_noise.get([(pos.0 as f64 + position.0 as f64 * 16.0) * 0.001, (pos.2 as f64 + position.1 as f64 * 16.0) * 0.001]) as f32 * 10.;
         
         if temperature > 0.5 && moisture < 0.5 {
-            blocks = add_cactus(pos.0, pos.1, pos.2, blocks);
+            blocks = add_cactus(random.gen_range(2..5), pos.0, pos.1, pos.2, blocks);
         }
         else {
-            blocks = add_tree(position, pos.0, pos.1, pos.2, world_map, blocks);
+            blocks = add_tree(random.gen_range(3..6), position, pos.0, pos.1, pos.2, world_map, blocks);
         }
     }
 

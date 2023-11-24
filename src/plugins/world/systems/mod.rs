@@ -16,7 +16,7 @@ pub fn generate_world_system(
     let temperature_perlin = Perlin::new(seed+20);
     let moisture_perlin = Perlin::new(seed+30);
 
-    commands.insert_resource(SeededPerlin { terrain_noise: terrain_perlin, tree_noise: tree_perlin, temperature_noise: temperature_perlin, moisture_noise: moisture_perlin});
+    commands.insert_resource(SeededPerlin { seed: seed, terrain_noise: terrain_perlin, tree_noise: tree_perlin, temperature_noise: temperature_perlin, moisture_noise: moisture_perlin});
 }
 
 pub fn generate_chunks_from_player_movement(

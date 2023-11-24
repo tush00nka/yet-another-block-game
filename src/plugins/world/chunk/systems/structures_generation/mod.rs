@@ -3,10 +3,11 @@ use bevy::prelude::*;
 use crate::{plugins::world::{WorldMap, chunk::components::BlockType}, CHUNK_WIDTH, CHUNK_HEIGHT};
 
 pub fn add_cactus (
+    height: usize,
     x: usize, y: usize, z: usize,
     mut blocks: Vec<Vec<Vec<BlockType>>>,
 ) -> Vec<Vec<Vec<BlockType>>> {
-    for i in 1..4 {
+    for i in 1..height {
         if y+i < CHUNK_HEIGHT-1 {
             blocks[x][y+i][z] = BlockType::Cactus;
         }
@@ -16,12 +17,13 @@ pub fn add_cactus (
 }
 
 pub fn add_tree(
+    height: usize,
     chunk_pos: (i32, i32),
     x: usize, y: usize, z: usize,
     world_map: &mut ResMut<WorldMap>,
     mut blocks: Vec<Vec<Vec<BlockType>>>,
 ) -> Vec<Vec<Vec<BlockType>>> {
-    blocks[x][y+5][z] = BlockType::Leaves;
+    blocks[x][y+height][z] = BlockType::Leaves;
 
     let mut reserved_blocks_x = vec![vec![vec![BlockType::Air; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH];
     let mut reserved_blocks_neg_x = vec![vec![vec![BlockType::Air; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH];
@@ -46,12 +48,12 @@ pub fn add_tree(
     let mut need_z = false;
     let mut need_neg_z = false;
 
-    for i in 1..5 {
+    for i in 1..height {
         if y+i < CHUNK_HEIGHT-1 {
             blocks[x][y+i][z] = BlockType::WoodLog;
         }
 
-        for j in 1..5-i-1 {
+        for j in 1..height-i-1 {
 
             if x+j >= CHUNK_WIDTH {
                 reserved_blocks_x[x+j-CHUNK_WIDTH][y+i+2][z] = BlockType::Leaves;

@@ -16,5 +16,6 @@ opt-level = 1
 [dependencies]
 bevy = { version = "0.12", features = ["dynamic_linking"] }
 bevy_rapier3d = "0.23"
+bevy_meshem = "0.3.0"
 noise = "0.8.2"
 rand = "0.8.5"

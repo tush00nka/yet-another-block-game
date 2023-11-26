@@ -109,7 +109,6 @@ pub fn generate_water_chunk_mesh(
 
     let mut verticies: Vec<[f32; 3]> = vec![];
     let mut indices: Vec<u32> = vec![];
-    let mut normals: Vec<Vec3> = vec![];
     let mut uvs: Vec<Vec2> = vec![];
 
     for i in 0..CHUNK_BLOCK_COUNT {
@@ -117,11 +116,10 @@ pub fn generate_water_chunk_mesh(
         let y = (i - (z * CHUNK_WIDTH*CHUNK_HEIGHT)) / CHUNK_WIDTH;
         let x = (i - (z * CHUNK_WIDTH*CHUNK_HEIGHT)) % CHUNK_WIDTH;
 
-        generate_water_block(&mut verticies, &mut indices, &mut normals, &mut uvs, &world_map.chunks, &(x as i32,y as i32,z as i32), &position);
+        generate_water_block(&mut verticies, &mut indices, &mut uvs, &world_map.chunks, &(x as i32,y as i32,z as i32), &position);
     }
 
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, verticies.clone());
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals.clone());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, verticies);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
     mesh.set_indices(Some(mesh::Indices::U32(indices)));
 
@@ -136,7 +134,6 @@ pub fn generate_chunk_mesh(
 
     let mut verticies: Vec<[f32; 3]> = vec![];
     let mut indices: Vec<u32> = vec![];
-    let mut normals: Vec<Vec3> = vec![];
     let mut uvs: Vec<Vec2> = vec![];
     let mut colors: Vec<[f32; 4]> = vec![];
 
@@ -145,11 +142,10 @@ pub fn generate_chunk_mesh(
         let y = (i - (z * CHUNK_WIDTH*CHUNK_HEIGHT)) / CHUNK_WIDTH;
         let x = (i - (z * CHUNK_WIDTH*CHUNK_HEIGHT)) % CHUNK_WIDTH;
 
-        generate_block(&mut verticies, &mut indices, &mut normals, &mut uvs, &world_map.chunks, &(x as i32,y as i32,z as i32), &position);
+        generate_block(&mut verticies, &mut indices, &mut uvs, &world_map.chunks, &(x as i32,y as i32,z as i32), &position);
     }
 
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, verticies.clone());
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals.clone());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, verticies);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
     mesh.set_indices(Some(mesh::Indices::U32(indices)));
 
@@ -412,7 +408,6 @@ pub fn build_chunk(
 fn generate_water_block(
     verticies: &mut Vec<[f32; 3]>,
     indices: &mut Vec<u32>,
-    normals: &mut Vec<Vec3>,
     uvs: &mut Vec<Vec2>,
     chunks: &HashMap<(i32,i32), [BlockType; CHUNK_BLOCK_COUNT]>,
     block_position: &(i32,i32,i32),
@@ -435,8 +430,6 @@ fn generate_water_block(
             [x + 0.0, y + 1.0 - 0.125, z + 0.0],
             [x + 0.0, y + 1.0 - 0.125, z + 1.0]
         ]);
-        normals.extend([Vec3::Y, Vec3::Y, Vec3::Y, Vec3::Y]);
-
         add_indices(indices, (verticies.len() - 4) as u32);
         uvs.extend(block.uvs().top);
     }
@@ -445,7 +438,6 @@ fn generate_water_block(
 fn generate_block(
     verticies: &mut Vec<[f32; 3]>,
     indices: &mut Vec<u32>,
-    normals: &mut Vec<Vec3>,
     uvs: &mut Vec<Vec2>,
     chunks: &HashMap<(i32,i32), [BlockType; CHUNK_BLOCK_COUNT]>,
     block_position: &(i32,i32,i32),
@@ -468,8 +460,6 @@ fn generate_block(
             [x + 1.0, y + 0.0, z + 0.0],
         ]);
 
-        normals.extend([Vec3::NEG_X, Vec3::NEG_X, Vec3::NEG_X, Vec3::NEG_X]);
-    
         add_indices(indices, (verticies.len() - 4) as u32);
         uvs.extend(block.uvs().right);
     }
@@ -483,8 +473,6 @@ fn generate_block(
             [x + 0.0, y + 0.0, z + 0.0],
             [x + 0.0, y + 0.0, z + 1.0]
         ]);
-
-        normals.extend([Vec3::X, Vec3::X, Vec3::X, Vec3::X]);
 
         add_indices(indices, (verticies.len() - 4) as u32);
         uvs.extend(block.uvs().left);
@@ -500,8 +488,6 @@ fn generate_block(
             [x + 0.0, y + 0.0, z + 0.0],
         ]);
 
-        normals.extend([Vec3::NEG_Z, Vec3::NEG_Z, Vec3::NEG_Z, Vec3::NEG_Z]);
-
         add_indices(indices, (verticies.len() - 4) as u32);
         uvs.extend(block.uvs().back);
     }
@@ -515,8 +501,6 @@ fn generate_block(
             [x + 0.0, y + 0.0, z + 1.0],
             [x + 1.0, y + 0.0, z + 1.0],
         ]);
-
-        normals.extend([Vec3::Z, Vec3::Z, Vec3::Z, Vec3::Z]);
 
         add_indices(indices, (verticies.len() - 4) as u32);
         uvs.extend(block.uvs().front);
@@ -532,8 +516,6 @@ fn generate_block(
             [x + 1.0, y + 0.0, z + 1.0]
         ]);
 
-        normals.extend([Vec3::NEG_Y, Vec3::NEG_Y, Vec3::NEG_Y, Vec3::NEG_Y]);
-
         add_indices(indices, (verticies.len() - 4) as u32);
         uvs.extend(block.uvs().bottom);
     }
@@ -547,7 +529,6 @@ fn generate_block(
             [x + 0.0, y + 1.0, z + 0.0],
             [x + 0.0, y + 1.0, z + 1.0]
         ]);
-        normals.extend([Vec3::Y, Vec3::Y, Vec3::Y, Vec3::Y]);
 
         add_indices(indices, (verticies.len() - 4) as u32);
         uvs.extend(block.uvs().top);

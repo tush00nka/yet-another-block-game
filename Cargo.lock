@@ -719,6 +719,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_meshem"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9590acc6716d099e392c4a91ea8ab8fc8a3894e88b864c2ee649e062430cca1"
+dependencies = [
+ "bevy",
+ "rand 0.8.5",
+]
+
+[[package]]
 name = "bevy_mikktspace"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4048,6 +4058,7 @@ name = "yet-another-block-game"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_meshem",
  "bevy_rapier3d",
  "noise",
  "rand 0.8.5",

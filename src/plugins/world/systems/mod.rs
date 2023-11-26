@@ -5,7 +5,7 @@ use noise::Perlin;
 
 use crate::{RENDER_DISTANCE, CHUNK_WIDTH, plugins::player::components::Player};
 
-use super::{chunk::{systems::{generate_chunk_data, build_chunk}, components::ChunkComponent}, WorldMap, SeededPerlin, ChunkQueue};
+use super::{chunk::systems::{generate_chunk_data, build_chunk}, WorldMap, SeededPerlin, ChunkQueue};
 
 pub fn generate_world_system(
     mut commands: Commands,
@@ -49,17 +49,27 @@ pub fn generate_chunks_from_player_movement(
 
 pub fn unload_far_chunks(
     mut commands: Commands,
-    chunk_query: Query<(&ChunkComponent, Entity)>,
     player_query: Query<&Transform, With<Player>>,
     mut world_map: ResMut<WorldMap>,
 ) {
     let player_transform = player_query.single();
     let (chunk_x, chunk_z) = ((player_transform.translation.x / CHUNK_WIDTH as f32).round() as i32, (player_transform.translation.z / CHUNK_WIDTH as f32).round() as i32);
     
-    for (component, chunk) in chunk_query.iter() {
-        if (chunk_x - component.position.0).abs() > RENDER_DISTANCE ||  (chunk_z - component.position.1).abs() > RENDER_DISTANCE {
-            world_map.chunk_entities.remove(&component.position);
-            commands.entity(chunk).despawn();
+    for chunk in world_map.chunk_entities.clone().iter() {
+        let chunk_position = chunk.0.clone();
+
+        if (chunk_x - chunk_position.0).abs() > RENDER_DISTANCE ||  (chunk_z - chunk_position.1).abs() > RENDER_DISTANCE {
+            commands.entity(*chunk.1).despawn();
+            world_map.chunk_entities.remove(&chunk_position);
+        }
+    }
+
+    for chunk in world_map.water_chunk_entities.clone().iter() {
+        let chunk_position = chunk.0.clone();
+
+        if (chunk_x - chunk_position.0).abs() > RENDER_DISTANCE ||  (chunk_z - chunk_position.1).abs() > RENDER_DISTANCE {
+            commands.entity(*chunk.1).despawn();
+            world_map.water_chunk_entities.remove(&chunk_position);
         }
     }
 }
@@ -80,7 +90,8 @@ pub fn deque_chunks(
     asset_server: Res<AssetServer>,
     player_query: Query<&Transform, With<Player>>,
 ) {
-    if chunk_queue.queue.len() > 0 { 
+    if chunk_queue.queue.len() > 0 && chunk_queue.is_next_ready { 
+        chunk_queue.is_next_ready = false;
         if let Ok(player_transform) = player_query.get_single() {
             let position = ((player_transform.translation.x / CHUNK_WIDTH as f32).floor() as i32, (player_transform.translation.z / CHUNK_WIDTH as f32).floor() as i32);
             let closest_index = get_closest_chunk_from_queue(&chunk_queue.queue, position);
@@ -88,7 +99,7 @@ pub fn deque_chunks(
 
             if world_map.chunks.contains_key(&chunk) {
                 chunk_queue.queue.remove(closest_index);
-                build_chunk(&mut commands, &mut world_map, &mut meshes, &mut materials, asset_server, chunk);
+                chunk_queue.is_next_ready = build_chunk(&mut commands, &mut world_map, &mut meshes, &mut materials, asset_server, chunk);
             }
         }
     }

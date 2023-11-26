@@ -1,11 +1,5 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-pub struct ChunkComponent {
-    pub position: (i32,i32),
-    pub blocks: Vec<Vec<Vec<BlockType>>>,
-}
-
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum BlockType {
     Air,
@@ -23,7 +17,7 @@ impl BlockType {
     pub fn is_transparent(&self) -> bool {
         match self {
             BlockType::Air => true,
-            BlockType::Water => false,
+            BlockType::Water => true,
             _ => false,
         }
     }
